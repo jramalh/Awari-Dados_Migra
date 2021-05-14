@@ -36,16 +36,16 @@ df_17 = df_17.assign(Ano=2017)
 df_18 = df_18.assign(Ano=2018)
 df_19 = df_19.assign(Ano=2019)
 
-#inflação de 2011 definida como zero pois o ano inicial
-df_11 = df_11.assign(Inflacao=0)
-df_12 = df_12.assign(Inflacao=5.84)
-df_13 = df_13.assign(Inflacao=5.91)
-df_14 = df_14.assign(Inflacao=6.41)
-df_15 = df_15.assign(Inflacao=10.67)
-df_16 = df_16.assign(Inflacao=2015)
-df_17 = df_17.assign(Inflacao=2.95)
-df_18 = df_18.assign(Inflacao=3.75)
-df_19 = df_19.assign(Inflacao=4.31)
+#inflação de anual
+df_11 = df_11.assign(Inflacao=0.065)
+df_12 = df_12.assign(Inflacao=0.0584)
+df_13 = df_13.assign(Inflacao=0.0591)
+df_14 = df_14.assign(Inflacao=0.0641)
+df_15 = df_15.assign(Inflacao=0.1067)
+df_16 = df_16.assign(Inflacao=0.0629)
+df_17 = df_17.assign(Inflacao=0.0295)
+df_18 = df_18.assign(Inflacao=0.0375)
+df_19 = df_19.assign(Inflacao=0.0431)
 
 # %%
 #carregando maps
@@ -65,34 +65,32 @@ cbo_map = dict(df_cbo.values)
 #Sexo-map
 sexo_map = {1: "homem", 2: "mulher"}
 
+#Continente map
+conti_map = { "sia": "Asia", "frica": "Africa", "amrica central e caribe": "america central e caribe", "amrica do sul": "america do sul", "amrica do norte": "america do norte"}
+
 #Raça-map
 raca_map = {1:"indigena", 2:"branca", 4:"preta", 6:"amarela", 8:"parda", 9:"nao_ident", -1:"ignorado"}
 
 # %%
 # agrupando as base de dados
-lista_mchine = [df_11 , df_12 , df_13 , df_14, df_15 , df_16 , df_17 , df_18 , df_19 ]
+lista_concat = [df_11 , df_12 , df_13 , df_14, df_15 , df_16 , df_17 , df_18 , df_19 ]
 
-lista_tableau = [df_11 , df_12 ]
-lista_tableau2 = [df_13 , df_14 ]
-lista_tableau3 = [df_15 , df_16 ]
-lista_tableau4 = [df_17 , df_18 ]
-lista_tableau5 = [df_19]
-
-
-df_tableau = pd.concat(lista_tableau)
-df_tableau2 = pd.concat(lista_tableau2)
-df_tableau3 = pd.concat(lista_tableau3)
-df_tableau4 = pd.concat(lista_tableau4)
-df_tableau5 = pd.concat(lista_tableau5)
-
-all_df = pd.concat(lista_mchine)
+concat_df = pd.concat(lista_concat)
 
 # removendo nans 
 # antes 1357088 rows
 # depois 1184189  row
 # %%
 # Limpando DFs com coisas desnecessarias
-def limpar_df(x):
+def limpar_df(x):   
+    x["cbo_2002"] = x["cbo_2002"].map(cbo_map)
+    x["municipio"] = x["municipio"].map(muni_map)
+    x["raca_cor"] = x["raca_cor"].map(raca_map)
+    x["sexo"] = x["sexo"].map(sexo_map)   
+    x["continente"] = x["continente"].str.normalize("NFKD").str.lower().str.encode("ascii", errors="ignore").str.decode("utf8")
+    x["status_migratorio"] = x["status_migratorio"].str.normalize("NFKD").str.lower().str.encode("ascii", errors="ignore").str.decode("utf8")
+    x["pais"] = x["pais"].str.normalize("NFKD").str.lower().str.encode("ascii", errors="ignore").str.decode("utf8")
+    x["continente"] = x["continente"].map(conti_map)
     x = x.drop(columns=["cnae_20_subclas"])
     x = x.drop(columns=["movimento"])
     x = x.drop(columns=["cnae_20_classe"])
@@ -101,68 +99,32 @@ def limpar_df(x):
     x = x.drop(columns=["uf"]) 
     x = x.drop(columns=["indtrabintermitente"])
     x = x.drop(columns=["indtrabparcial"])
-    x = x.dropna()   
+    x = x
+    x = x.dropna()
     return x
 
-def limpar_df_t1(u):
-    u = u.drop(columns=["cnae_20_subclas"])
-    u = u.drop(columns=["movimento"])
-    u = u.drop(columns=["cnae_20_classe"])
-    u = u.drop(columns=["competencia"])
-    u = u.drop(columns=["tipo_mov_desagregado"])
-    u = u.drop(columns=["uf"]) 
-    u = u.dropna()   
-    return u
 
 # removendo nans 
 # antes 1357088 rows
 # depois 1184189  rows
 
 #arrumando escrita e substituindo numeros por palavras
-def irregularidades (g):
-    g["cbo_2002"] = g["cbo_2002"].map(cbo_map)
-    g["municipio"] = g["municipio"].map(muni_map)
-    g["raca_cor"] = g["raca_cor"].map(raca_map)
-    g["sexo"] = g["sexo"].map(sexo_map)   
-    g["continente"] = g["continente"].str.normalize("NFKD").str.lower().str.encode("ascii", errors="ignore").str.decode("utf8")
-    g["status_migratorio"] = g["status_migratorio"].str.normalize("NFKD").str.lower().str.encode("ascii", errors="ignore").str.decode("utf8")
-    g["pais"] = g["pais"].str.normalize("NFKD").str.lower().str.encode("ascii", errors="ignore").str.decode("utf8")
-    return g
 
 # %%
 #Aplicando mudanças ao DF
-limpar_df(all_df) , irregularidades(all_df)
-limpar_df_t1(df_tableau) , irregularidades(df_tableau)
-limpar_df_t1(df_tableau2) , irregularidades(df_tableau2)
-limpar_df(df_tableau3) , irregularidades(df_tableau3)
-limpar_df(df_tableau4) , irregularidades(df_tableau4)
-limpar_df(df_tableau5) , irregularidades(df_tableau5)
+concat_df = limpar_df(concat_df) 
+
+df_machine = concat_df
+
+
+# %%
+concat_df.to_csv("Analise_Tableau.csv", sep=";")
 
 # %%
 # Inicio Machine Learning
 plt.figure(figsize=(10,10))
-sns.heatmap(all_df.corr(), annot=True)
+sns.heatmap(df_machine.corr(), annot=True)
 # %%
-X = all_df[[w for w in all_df.columns if w!="salario_mensal"]]
-y = all_df["salario_mensal"]
+X = df_machine[[w for w in df_machine.columns if w!="salario_mensal"]]
+y = df_machine["salario_mensal"]
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=.8, random_state=12345)
-# %%
-# Conectando all_df-> Google Sheets -> Tableau
-import sys
-!{sys.executable} -m pip install pygsheets
-
-# %%
-import pygsheets
-client = pygsheets.authorize(service_file=r'C:\Users\ninja\OneDrive\Documentos\rct2\Awari\Trabalho Final\awari-dadosmigra-c49b776ddaa4.json')
-# %%
-sheet = client.open("DadosMigra_11-12")
-sheet2 = client.open("DadosMigra_13-14")
-sheet3 = client.open("DadosMigra_15-16")
-sheet4 = client.open("DadosMigra_17-18")
-sheet5 = client.open("DadosMigra_19")
-
-# %%
-wks = sheet[0]
-
-# %%
-wks.set_dataframe(df_tableau,(1,1)) 
