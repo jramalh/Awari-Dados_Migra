@@ -1,4 +1,3 @@
-#%%
 #importando bibliotecas
 import pandas as pd
 import seaborn as sns
@@ -6,6 +5,10 @@ import catboost as cat
 from catboost import CatBoostRegressor
 from catboost import CatBoostClassifier  
 from sklearn.metrics import confusion_matrix, classification_report 
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+from sklearn.inspection import permutation_importance
 import numpy as np
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
@@ -122,7 +125,7 @@ df_machine = concat_df
 
 # %%
 #salvando pasta para Analise Exploratoria
-#concat_df.to_csv("Analise_Tableau.csv", sep=";")
+concat_df.to_csv("Analise_Tableau.csv", sep=";")
 
 # %%
 # Inicio Machine Learning
@@ -135,21 +138,49 @@ X = df_machine[[w for w in df_machine.columns if w!="nivel_instrucao"]]
 y = df_machine["nivel_instrucao"]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=12345)
 # %%
+
 categorical_features = ['pais', 'continente', 'municipio', 'cbo_2002', 'sexo', 
          'raca_cor', 'status_migratorio',]
 
 cat = CatBoostClassifier(random_state=12345 , cat_features=categorical_features)
-
-# %%
 cat.fit(X_train, y_train, eval_set=(X_test, y_test))
 y_pred = cat.predict(X_test)
-
-# %%
 print(classification_report(y_test, y_pred))
-
-# %%
 print(classification_report(y_train, cat.predict(X_train)))
+cat.get_feature_importance(prettified=True)
+
 
 # %%
 
-cat.get_feature_importance(prettified=True)
+#catboost regreção
+
+X1 = df_machine[[w for w in df_machine.columns if w!="salario_mensal"]]
+y1 = df_machine["salario_mensal"]
+X_train1, X_test1, y_train1, y_test1 = train_test_split(X1, y1, train_size=.8, random_state=12345)
+# %%
+categorical_features1 = ['pais', 'continente', 'municipio', 'cbo_2002', 'sexo', 
+         'raca_cor', 'status_migratorio',]
+# %%
+mode = cat.CatBoostRegressor(loss_function="RMSE")
+
+
+# %%
+mode.fit(X_train1, y_train1,
+        
+        cat_features=categorical_features1, # variaveis
+
+        eval_set=(X_test1 , y_test1))
+
+grid = {'iterations': [100, 150, 200],
+        'learning_rate': [0.03, 0.1],
+        'depth': [2, 4, 6, 8],
+        'l2_leaf_reg': [0.2, 0.5, 1, 3]}
+
+
+# %%
+y_pred1 = mode.predict(X_test1)
+rmse = (np.sqrt(mean_squared_error(y_test1, y_pred1)))
+r2 = r2_score(y_test1, y_pred1)
+print("Testing performance")
+print("RMSE: {:.2f}".format(rmse))
+print("R2: {:.2f}".format(r2))
