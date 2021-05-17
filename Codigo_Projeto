@@ -3,6 +3,9 @@
 import pandas as pd
 import seaborn as sns
 import catboost as cat
+from catboost import CatBoostRegressor
+from catboost import CatBoostClassifier  
+from sklearn.metrics import confusion_matrix, classification_report 
 import numpy as np
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
@@ -118,13 +121,35 @@ df_machine = concat_df
 
 
 # %%
-concat_df.to_csv("Analise_Tableau.csv", sep=";")
+#salvando pasta para Analise Exploratoria
+#concat_df.to_csv("Analise_Tableau.csv", sep=";")
 
 # %%
 # Inicio Machine Learning
 plt.figure(figsize=(10,10))
 sns.heatmap(df_machine.corr(), annot=True)
+
 # %%
-X = df_machine[[w for w in df_machine.columns if w!="salario_mensal"]]
-y = df_machine["salario_mensal"]
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=.8, random_state=12345)
+#CatBoost Agrupamento
+X = df_machine[[w for w in df_machine.columns if w!="nivel_instrucao"]]
+y = df_machine["nivel_instrucao"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=12345)
+# %%
+categorical_features = ['pais', 'continente', 'municipio', 'cbo_2002', 'sexo', 
+         'raca_cor', 'status_migratorio',]
+
+cat = CatBoostClassifier(random_state=12345 , cat_features=categorical_features)
+
+# %%
+cat.fit(X_train, y_train, eval_set=(X_test, y_test))
+y_pred = cat.predict(X_test)
+
+# %%
+print(classification_report(y_test, y_pred))
+
+# %%
+print(classification_report(y_train, cat.predict(X_train)))
+
+# %%
+
+cat.get_feature_importance(prettified=True)
